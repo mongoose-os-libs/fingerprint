@@ -1,0 +1,22 @@
+author: Pim van Pelt <pim@ipng.nl>
+description: Library that implements GROW fingerprint modules
+type: lib
+version: 1.0
+
+tags:
+  - c
+  - hw
+
+# List of files / directories with C sources. No slashes at the end of dir names.
+sources:
+  - src
+
+includes:
+  - include
+
+config_schema:
+
+libs:
+
+# Used by the mos tool to catch mos binaries incompatible with this file format
+manifest_version: 2017-05-18
