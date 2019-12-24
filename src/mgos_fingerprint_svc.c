@@ -32,34 +32,28 @@ static void mgos_fingerprint_svc_match(struct mgos_fingerprint *finger) {
     goto out;
   }
 
-  uint16_t fid = -1, score = 0;
-  p = mgos_fingerprint_database_search(finger, &fid, &score, 1);
-  switch (p) {
-    case MGOS_FINGERPRINT_OK:
-      LOG(LL_INFO, ("Fingerprint match: fid=%d score=%d", fid, score));
-      break;
-    case MGOS_FINGERPRINT_NOTFOUND:
-      LOG(LL_INFO, ("Fingerprint not found"));
-      break;
-    default:
-      LOG(LL_ERROR, ("Error database_search(): %d!", p));
+  uint16_t finger_id = -1, score = 0;
+  uint32_t pack = 0;
+  p = mgos_fingerprint_database_search(finger, &finger_id, &score, 1);
+  if (p == MGOS_FINGERPRINT_OK) {
+    pack = (score << 16) + finger_id;
+    if (finger->handler)
+      finger->handler(finger, MGOS_FINGERPRINT_EV_MATCH_OK,
+                      (void *) (uintptr_t) &pack, finger->handler_user_data);
+    return;
   }
 
 out:
-  if (p == MGOS_FINGERPRINT_OK) {
-    if (finger->handler)
-      finger->handler(finger, MGOS_FINGERPRINT_EV_MATCH_OK, NULL,
-                      finger->handler_user_data);
-  } else {
-    if (finger->handler)
-      finger->handler(finger, MGOS_FINGERPRINT_EV_MATCH_ERROR, NULL,
-                      finger->handler_user_data);
-  }
+  pack = p;
+  if (finger->handler)
+    finger->handler(finger, MGOS_FINGERPRINT_EV_MATCH_ERROR,
+                    (void *) (uintptr_t) &pack, finger->handler_user_data);
 }
 
 static void mgos_fingerprint_svc_enroll(struct mgos_fingerprint *finger) {
   if (!finger) return;
   int16_t p;
+  uint32_t pack = 0;
 
   switch (finger->svc_state) {
     case MGOS_FINGERPRINT_STATE_ENROLL1:
@@ -68,7 +62,7 @@ static void mgos_fingerprint_svc_enroll(struct mgos_fingerprint *finger) {
         LOG(LL_ERROR, ("Could not generate first image"));
         goto err;
       }
-      LOG(LL_INFO, ("Stored first fingerprint: Remove finger"));
+      LOG(LL_DEBUG, ("Stored first fingerprint: Remove finger"));
 
       while (p != MGOS_FINGERPRINT_NOFINGER) {
         p = mgos_fingerprint_image_get(finger);
@@ -84,33 +78,36 @@ static void mgos_fingerprint_svc_enroll(struct mgos_fingerprint *finger) {
 
       break;
     case MGOS_FINGERPRINT_STATE_ENROLL2: {
-      int16_t fid;
+      int16_t finger_id;
 
       if (MGOS_FINGERPRINT_OK != mgos_fingerprint_image_genchar(finger, 2)) {
         LOG(LL_ERROR, ("Could not generate second fingerprint"));
         goto err;
       }
-      LOG(LL_INFO, ("Stored second fingerprint"));
+      LOG(LL_DEBUG, ("Stored second fingerprint"));
 
       if (MGOS_FINGERPRINT_OK != mgos_fingerprint_model_combine(finger)) {
         LOG(LL_ERROR, ("Could not combine fingerprints into a model"));
         goto err;
       }
-      LOG(LL_INFO, ("Fingerprints combined successfully"));
+      LOG(LL_DEBUG, ("Fingerprints combined successfully"));
 
-      if (MGOS_FINGERPRINT_OK != mgos_fingerprint_get_free_id(finger, &fid)) {
+      if (MGOS_FINGERPRINT_OK !=
+          mgos_fingerprint_get_free_id(finger, &finger_id)) {
         LOG(LL_ERROR, ("Could not get free flash slot"));
         goto err;
       }
 
-      if (MGOS_FINGERPRINT_OK != mgos_fingerprint_model_store(finger, fid, 1)) {
-        LOG(LL_ERROR, ("Could not store model in flash slot %u", fid));
+      if (MGOS_FINGERPRINT_OK !=
+          mgos_fingerprint_model_store(finger, finger_id, 1)) {
+        LOG(LL_ERROR, ("Could not store model in flash slot %u", finger_id));
         goto err;
       }
-      LOG(LL_INFO, ("Model stored in flash slot %d", fid));
+      LOG(LL_DEBUG, ("Model stored in flash slot %d", finger_id));
+      pack = finger_id;
       if (finger->handler)
-        finger->handler(finger, MGOS_FINGERPRINT_EV_ENROLL_OK, NULL,
-                        finger->handler_user_data);
+        finger->handler(finger, MGOS_FINGERPRINT_EV_ENROLL_OK,
+                        (void *) (uintptr_t) &pack, finger->handler_user_data);
 
       finger->svc_state = MGOS_FINGERPRINT_STATE_MATCH;
       if (finger->handler)
@@ -130,8 +127,8 @@ err:
   finger->svc_state = MGOS_FINGERPRINT_STATE_ENROLL1;
 
   if (finger->handler)
-    finger->handler(finger, MGOS_FINGERPRINT_EV_STATE_ENROLL1, NULL,
-                    finger->handler_user_data);
+    finger->handler(finger, MGOS_FINGERPRINT_EV_STATE_ENROLL1,
+                    (void *) (intptr_t) &pack, finger->handler_user_data);
 }
 
 static void mgos_fingerprint_svc_timer(void *arg) {
@@ -148,7 +145,7 @@ static void mgos_fingerprint_svc_timer(void *arg) {
     return;
   }
 
-  LOG(LL_INFO,
+  LOG(LL_DEBUG,
       ("Fingerprint image taken (%s mode)",
        finger->svc_state == MGOS_FINGERPRINT_STATE_MATCH ? "match" : "enroll"));
 

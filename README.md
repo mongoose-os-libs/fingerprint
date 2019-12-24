@@ -83,7 +83,9 @@ A callback handler in `struct mgos_fingerprint_cfg` receives event callbacks as 
 *   `MGOS_FINGERPRINT_EV_INITIALIZED`: when the chip is first initialized successfully.
 *   `MGOS_FINGERPRINT_EV_IMAGE`: each time the sensor has successfully fetched an image.
 *   `MGOS_FINGERPRINT_EV_MATCH_OK`: in _match mode_ each time an image matched with one
-    of the model entries in the flash database.
+    of the model entries in the flash database. The matched fingerprint ID and score are
+    packed into `*ev_data`, the top 16 bits are the `score`, the lower 16 bits are the
+    `finger_id`.
 *   `MGOS_FINGERPRINT_EV_MATCH_ERROR`: in _match mode_ each time an image did not match
     with any model entries in the flash database, or if a processing error occured.
 *   `MGOS_FINGERPRINT_EV_STATE_MATCH`: when _match mode_ is entered.
@@ -92,7 +94,8 @@ A callback handler in `struct mgos_fingerprint_cfg` receives event callbacks as 
 *   `MGOS_FINGERPRINT_EV_STATE_ENROLL2`: when _enroll mode_ is processing the second (of two)
     fingerprint images.
 *   `MGOS_FINGERPRINT_EV_ENROLL_OK`: when _enroll mode_ successfully stored a fingerprint
-    model in the flash database.
+    model in the flash database. The stored fingerprint ID is packed into `*ev_data`, the
+    lower 16 bits are the `finger_id`.
 *   `MGOS_FINGERPRINT_EV_ENROLL_ERROR`: when _enroll mode_ failed to process or store a
     fingerprint model.
 
