@@ -64,6 +64,12 @@ extern "C" {
 #define MGOS_FINGERPRINT_DEFAULT_TIMEOUT 2000
 #define MGOS_FINGERPRINT_TEMPLATES_PER_PAGE 256
 
+// Service
+#define MGOS_FINGERPRINT_STATE_NONE 0x00
+#define MGOS_FINGERPRINT_STATE_MATCH 0x01    // Search/DB mode
+#define MGOS_FINGERPRINT_STATE_ENROLL1 0x02  // Enroll mode: First fingerprint
+#define MGOS_FINGERPRINT_STATE_ENROLL2 0x03  // Enroll mode: Second fingerprint
+
 struct mgos_fingerprint_packet {
   uint16_t startcode __attribute__((packed));
   uint32_t address __attribute__((packed));
@@ -80,15 +86,15 @@ struct mgos_fingerprint {
   struct mgos_fingerprint_system_params system_params;
   struct mgos_fingerprint_info info;
   struct mgos_fingerprint_packet packet;
+
+  mgos_fingerprint_ev_handler handler;
+  void *handler_user_data;
+
+  // Service
+  uint8_t svc_state;
+  int svc_timer_id;
+  uint16_t svc_period_ms;
 };
-
-static void write_packet(struct mgos_fingerprint *dev, uint8_t packettype,
-                         uint16_t datalen);
-static int16_t read_packet(struct mgos_fingerprint *dev);
-static int16_t mgos_fingerprint_txn(struct mgos_fingerprint *dev);
-
-static int16_t mgos_fingerprint_get_free_page_id(struct mgos_fingerprint *dev,
-                                                 uint8_t page, int16_t *id);
 
 #ifdef __cplusplus
 }

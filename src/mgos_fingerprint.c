@@ -22,12 +22,21 @@
 #include "mgos.h"
 #include "mgos_fingerprint_internal.h"
 
+static void write_packet(struct mgos_fingerprint *dev, uint8_t packettype,
+                         uint16_t datalen);
+static int16_t read_packet(struct mgos_fingerprint *dev);
+static int16_t mgos_fingerprint_txn(struct mgos_fingerprint *dev);
+static int16_t mgos_fingerprint_get_free_page_id(struct mgos_fingerprint *dev,
+                                                 uint8_t page, int16_t *id);
+
 void mgos_fingerprint_config_set_defaults(struct mgos_fingerprint_cfg *cfg) {
   if (!cfg) return;
   cfg->address = MGOS_FINGERPRINT_DEFAULT_ADDRESS;
   cfg->password = MGOS_FINGERPRINT_DEFAULT_PASSWORD;
   cfg->uart_no = 2;
   cfg->uart_baud_rate = 57600;
+  cfg->handler = NULL;
+  cfg->handler_user_data = NULL;
 }
 
 struct mgos_fingerprint *mgos_fingerprint_create(
@@ -40,6 +49,8 @@ struct mgos_fingerprint *mgos_fingerprint_create(
   dev->address = cfg->address;
   dev->password = cfg->password;
   dev->uart_no = cfg->uart_no;
+  dev->handler = cfg->handler;
+  dev->handler_user_data = cfg->handler_user_data;
 
   // Initialize UART
   mgos_uart_config_set_defaults(dev->uart_no, &ucfg);
@@ -69,6 +80,10 @@ struct mgos_fingerprint *mgos_fingerprint_create(
                 dev->info.hwver & 0xFF, 8, (char *) &dev->info.sensor_model,
                 dev->info.sensor_width, dev->info.sensor_height,
                 dev->info.model_capacity, num_models));
+
+  if (dev->handler)
+    dev->handler(dev, MGOS_FINGERPRINT_EV_INITIALIZED, NULL,
+                 dev->handler_user_data);
 
   return dev;
 err:

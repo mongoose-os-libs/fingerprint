@@ -125,15 +125,37 @@ struct __attribute__((packed)) mgos_fingerprint_info {
   uint16_t model_capacity;
 };
 
+struct mgos_fingerprint;
+typedef void (*mgos_fingerprint_ev_handler)(struct mgos_fingerprint *finger,
+                                            int ev, void *ev_data,
+                                            void *user_data);
+
+#define MGOS_FINGERPRINT_MODE_MATCH 0x01   // Search/DB mode
+#define MGOS_FINGERPRINT_MODE_ENROLL 0x02  // Enroll mode
+
+#define MGOS_FINGERPRINT_EV_NONE 0x0000
+#define MGOS_FINGERPRINT_EV_INITIALIZED 0x0001
+#define MGOS_FINGERPRINT_EV_IMAGE 0x0002
+#define MGOS_FINGERPRINT_EV_MATCH_OK 0x0003
+#define MGOS_FINGERPRINT_EV_MATCH_ERROR 0x0004
+#define MGOS_FINGERPRINT_EV_STATE_MATCH 0x0005
+#define MGOS_FINGERPRINT_EV_STATE_ENROLL1 0x0006
+#define MGOS_FINGERPRINT_EV_STATE_ENROLL2 0x0007
+#define MGOS_FINGERPRINT_EV_ENROLL_OK 0x0008
+#define MGOS_FINGERPRINT_EV_ENROLL_ERROR 0x0009
+
 struct mgos_fingerprint_cfg {
   uint32_t password;
   uint32_t address;
   uint8_t uart_no;
   uint32_t uart_baud_rate;
+
+  // User callback event handler
+  mgos_fingerprint_ev_handler handler;
+  void *handler_user_data;
 };
 
 // Structural
-struct mgos_fingerprint;
 void mgos_fingerprint_config_set_defaults(struct mgos_fingerprint_cfg *cfg);
 struct mgos_fingerprint *mgos_fingerprint_create(
     struct mgos_fingerprint_cfg *cfg);
@@ -199,7 +221,13 @@ int16_t mgos_fingerprint_verify_password(struct mgos_fingerprint *dev);
 int16_t mgos_fingerprint_set_password(struct mgos_fingerprint *dev,
                                       uint32_t pwd);
 
+// Library service
 bool mgos_fingerprint_init(void);
+bool mgos_fingerprint_svc_init(struct mgos_fingerprint *finger,
+                               uint16_t period_ms);
+bool mgos_fingerprint_svc_mode_set(struct mgos_fingerprint *finger, int mode);
+bool mgos_fingerprint_svc_mode_get(struct mgos_fingerprint *finger, int *mode);
+
 #ifdef __cplusplus
 }
 #endif
