@@ -73,7 +73,28 @@ Some models (R502, R503, for example) may also support lighing operations:
 
 ### Library primitives
 
-TODO(pim) -- add a higher level driver interface with callbacks.
+In addition to the low level primitives that the API provides, there is also a higher level
+implementation available. By calling `mgos_fingerprint_svc_init()`, a timer is set up at
+`period_ms` milliseconds intervals, at which time a fingerprint image is attempted to be
+created. Based on the _mode_ of operation (which can be set by `mgos_fingerprint_svc_mode_set()` to
+either _match_ or _enroll_), the fingerprint is processed accordingly.
+
+A callback handler in `struct mgos_fingerprint_cfg` receives event callbacks as follows:
+*   `MGOS_FINGERPRINT_EV_INITIALIZED`: when the chip is first initialized successfully.
+*   `MGOS_FINGERPRINT_EV_IMAGE`: each time the sensor has successfully fetched an image.
+*   `MGOS_FINGERPRINT_EV_MATCH_OK`: in _match mode_ each time an image matched with one
+    of the model entries in the flash database.
+*   `MGOS_FINGERPRINT_EV_MATCH_ERROR`: in _match mode_ each time an image did not match
+    with any model entries in the flash database, or if a processing error occured.
+*   `MGOS_FINGERPRINT_EV_STATE_MATCH`: when _match mode_ is entered.
+*   `MGOS_FINGERPRINT_EV_STATE_ENROLL1`: when _enroll mode_ is processing the first (of two)
+    fingerprint images.
+*   `MGOS_FINGERPRINT_EV_STATE_ENROLL2`: when _enroll mode_ is processing the second (of two)
+    fingerprint images.
+*   `MGOS_FINGERPRINT_EV_ENROLL_OK`: when _enroll mode_ successfully stored a fingerprint
+    model in the flash database.
+*   `MGOS_FINGERPRINT_EV_ENROLL_ERROR`: when _enroll mode_ failed to process or store a
+    fingerprint model.
 
 ## Supported devices
 
