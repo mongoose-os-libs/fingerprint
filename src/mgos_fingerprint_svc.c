@@ -109,9 +109,9 @@ static void mgos_fingerprint_svc_enroll(struct mgos_fingerprint *finger) {
         finger->handler(finger, MGOS_FINGERPRINT_EV_ENROLL_OK,
                         (void *) (uintptr_t) &pack, finger->handler_user_data);
 
-      finger->svc_state = MGOS_FINGERPRINT_STATE_MATCH;
+      finger->svc_state = MGOS_FINGERPRINT_STATE_ENROLL1;
       if (finger->handler)
-        finger->handler(finger, MGOS_FINGERPRINT_EV_STATE_MATCH, NULL,
+        finger->handler(finger, MGOS_FINGERPRINT_EV_STATE_ENROLL1, NULL,
                         finger->handler_user_data);
       return;
     }
