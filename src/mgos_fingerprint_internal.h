@@ -94,6 +94,7 @@ struct mgos_fingerprint {
   uint8_t svc_state;
   int svc_timer_id;
   uint16_t svc_period_ms;
+  float svc_state_ts;
 };
 
 #ifdef __cplusplus

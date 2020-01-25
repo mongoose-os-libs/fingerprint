@@ -70,6 +70,7 @@ static void mgos_fingerprint_svc_enroll(struct mgos_fingerprint *finger) {
       }
 
       finger->svc_state = MGOS_FINGERPRINT_STATE_ENROLL2;
+      finger->svc_state_ts = mg_time();
       if (finger->handler)
         finger->handler(finger, MGOS_FINGERPRINT_EV_STATE_ENROLL2, NULL,
                         finger->handler_user_data);
@@ -110,6 +111,7 @@ static void mgos_fingerprint_svc_enroll(struct mgos_fingerprint *finger) {
                         (void *) (uintptr_t) &pack, finger->handler_user_data);
 
       finger->svc_state = MGOS_FINGERPRINT_STATE_ENROLL1;
+      finger->svc_state_ts = mg_time();
       if (finger->handler)
         finger->handler(finger, MGOS_FINGERPRINT_EV_STATE_ENROLL1, NULL,
                         finger->handler_user_data);
@@ -125,6 +127,7 @@ err:
 
   LOG(LL_ERROR, ("Error, returning to enroll mode"));
   finger->svc_state = MGOS_FINGERPRINT_STATE_ENROLL1;
+  finger->svc_state_ts = mg_time();
 
   if (finger->handler)
     finger->handler(finger, MGOS_FINGERPRINT_EV_STATE_ENROLL1,
@@ -187,12 +190,14 @@ bool mgos_fingerprint_svc_mode_set(struct mgos_fingerprint *finger, int mode) {
   if (!finger) return false;
   if (mode == MGOS_FINGERPRINT_MODE_ENROLL) {
     finger->svc_state = MGOS_FINGERPRINT_STATE_ENROLL1;
+    finger->svc_state_ts = mg_time();
     if (finger->handler)
       finger->handler(finger, MGOS_FINGERPRINT_EV_STATE_ENROLL1, NULL,
                       finger->handler_user_data);
     return true;
   }
   finger->svc_state = MGOS_FINGERPRINT_STATE_MATCH;
+  finger->svc_state_ts = mg_time();
   if (finger->handler)
     finger->handler(finger, MGOS_FINGERPRINT_EV_STATE_MATCH, NULL,
                     finger->handler_user_data);
