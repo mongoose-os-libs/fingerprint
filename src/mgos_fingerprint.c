@@ -37,6 +37,7 @@ void mgos_fingerprint_config_set_defaults(struct mgos_fingerprint_cfg *cfg) {
   cfg->uart_baud_rate = 57600;
   cfg->handler = NULL;
   cfg->handler_user_data = NULL;
+  cfg->enroll_timeout_secs = 5;
 }
 
 struct mgos_fingerprint *mgos_fingerprint_create(
@@ -51,6 +52,7 @@ struct mgos_fingerprint *mgos_fingerprint_create(
   dev->uart_no = cfg->uart_no;
   dev->handler = cfg->handler;
   dev->handler_user_data = cfg->handler_user_data;
+  dev->enroll_timeout_secs = cfg->enroll_timeout_secs;
 
   // Initialize UART
   mgos_uart_config_set_defaults(dev->uart_no, &ucfg);

@@ -125,7 +125,7 @@ err:
     finger->handler(finger, MGOS_FINGERPRINT_EV_ENROLL_ERROR, NULL,
                     finger->handler_user_data);
 
-  LOG(LL_ERROR, ("Error, returning to enroll mode"));
+  LOG(LL_ERROR, ("Enroll error: returning to enroll mode"));
   finger->svc_state = MGOS_FINGERPRINT_STATE_ENROLL1;
   finger->svc_state_ts = mg_time();
 
@@ -138,6 +138,19 @@ static void mgos_fingerprint_svc_timer(void *arg) {
   struct mgos_fingerprint *finger = (struct mgos_fingerprint *) arg;
 
   if (!finger) return;
+
+  // Handle enroll timeout
+  if ((finger->svc_state == MGOS_FINGERPRINT_STATE_ENROLL1) ||
+      (finger->svc_state == MGOS_FINGERPRINT_STATE_ENROLL2)) {
+    if (finger->enroll_timeout_secs > 0) {
+      float now = mg_time();
+      if (now - finger->svc_state_ts > finger->enroll_timeout_secs) {
+        LOG(LL_WARN, ("Enroll timeout: switching back to match mode"));
+        mgos_fingerprint_svc_mode_set(finger, MGOS_FINGERPRINT_STATE_MATCH);
+        return;
+      }
+    }
+  }
 
   int16_t p = mgos_fingerprint_image_get(finger);
   if (p == MGOS_FINGERPRINT_NOFINGER) {
@@ -156,14 +169,10 @@ static void mgos_fingerprint_svc_timer(void *arg) {
     finger->handler(finger, MGOS_FINGERPRINT_EV_IMAGE, NULL,
                     finger->handler_user_data);
 
-  switch (finger->svc_state) {
-    case MGOS_FINGERPRINT_STATE_ENROLL1:
-    case MGOS_FINGERPRINT_STATE_ENROLL2:
-      mgos_fingerprint_svc_enroll(finger);
-      return;
-      break;
-    default:
-      break;
+  if ((finger->svc_state == MGOS_FINGERPRINT_STATE_ENROLL1) ||
+      (finger->svc_state == MGOS_FINGERPRINT_STATE_ENROLL2)) {
+    mgos_fingerprint_svc_enroll(finger);
+    return;
   }
   mgos_fingerprint_svc_match(finger);
   return;

@@ -153,6 +153,8 @@ struct mgos_fingerprint_cfg {
   // User callback event handler
   mgos_fingerprint_ev_handler handler;
   void *handler_user_data;
+
+  int enroll_timeout_secs;
 };
 
 // Structural
